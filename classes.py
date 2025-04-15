@@ -1,12 +1,11 @@
 from tkinter import *
 from tkinter.ttk import *
-import time
 
 
 class Window:
     def __init__(self, width, height):
         self.root = Tk()
-        self.root.title("This is a maze solver")
+        self.root.title("Eat Pant")
         self.root.geometry(f"{width}x{height}")
         self.canvas = Canvas(height=height, width=width)
         self.canvas.pack()
@@ -45,12 +44,12 @@ class Line:
 
     
     def draw(self, win, fill_color):
-        win.canvas.create_line(
+        win.create_line(
             self.p1.x, self.p1.y, self.p2.x, self.p2.y, fill=fill_color, width=2
         )
 
 class Cell:
-    def __init__(self, top_left, cell_size_x, cell_size_y, win): 
+    def __init__(self, top_left, cell_size_x, cell_size_y, win = None): 
         self._x1 = top_left.x
         self._y1 = top_left.y
         self._x2 = top_left.x + cell_size_x
@@ -62,39 +61,49 @@ class Cell:
         self.has_bottom_wall = True
         self.has_top_wall = True
         self._win = win
+        self.visited = False
 
     def draw(self, tl, br): # tl = TopLeft | br = BottomRight
-        if self.has_left_wall == True:
-            left_wall = Line(tl, Point(tl.x, br.y))
-            left_wall.draw(self._win, "black")
+        if self._win == None:
+            return
 
-        if self.has_right_wall == True:
-            right_wall = Line(Point(br.x, tl.y), br)
-            right_wall.draw(self._win, "black")
+        left_wall = Line(tl, Point(tl.x, br.y))
+        right_wall = Line(Point(br.x, tl.y), br)
+        top_wall = Line(tl, Point(br.x, tl.y))
+        bottom_wall = Line(Point(tl.x, br.y), br)
+
+        if self.has_left_wall == True:       
+            self._win.draw_line(left_wall, "black")
+        else:
+            self._win.draw_line(left_wall, "#d9d9d9")
+            
+
+        if self.has_right_wall == True:   
+            self._win.draw_line(right_wall, "black")
+        else:
+            self._win.draw_line(right_wall, "#d9d9d9")
         
-        if self.has_top_wall == True:
-            top_wall = Line(tl, Point(br.x, tl.y))
-            top_wall.draw(self._win, "black")
+        if self.has_top_wall == True:      
+            self._win.draw_line(top_wall, "black")
+        else:
+            self._win.draw_line(top_wall, "#d9d9d9")
         
-        if self.has_bottom_wall == True:
-            bottom_wall = Line(Point(tl.x, br.y), br)
-            bottom_wall.draw(self._win, "black") 
+        if self.has_bottom_wall == True:     
+            self._win.draw_line(bottom_wall, "black")
+        else:
+            self._win.draw_line(bottom_wall, "#d9d9d9")
         
-    def draw_move(self, canvas, to_cell, undo = False):
+    def draw_move(self, to_cell, undo = False):
         if undo == False:
             fill_color = "red"
         else:
             fill_color = "grey"
 
         if self.is_adjacent_and_no_walls(to_cell):
-            canvas.create_line(
-                self._center_x, self._center_y, to_cell._center_x, to_cell._center_y, fill=fill_color, width = 2
-            )
+            move_line = Line(Point(self._center_x, self._center_y), Point(to_cell._center_x, to_cell._center_y))
+            self._win.draw_line(move_line, fill_color)
         else:
             pass
-     
-    
-
     
     def is_adjacent_and_no_walls(self, to_cell):
         return (
@@ -104,48 +113,3 @@ class Cell:
             (self._x1, self._y2) == (to_cell._x2, to_cell._y2) and not (self.has_left_wall or to_cell.has_right_wall)
         )
 
-
-class Maze:
-    def __init__(
-            self,
-            x1,
-            y1,
-            num_rows,
-            num_cols,
-            cell_size_x,
-            cell_size_y,
-            win):
-        self.x1 = x1
-        self.y1 = y1
-        self.num_rows = num_rows
-        self.num_cols = num_cols
-        self.cell_size_x = cell_size_x
-        self.cell_size_y = cell_size_y
-        self.win = win
-
-        self._create_cells()
-
-    def _create_cells(self):
-        self._cells = []
-        for i in range(1, self.num_cols+1):
-            cell_col = []
-            for j in range(1, self.num_rows+1):
-                cell_tl = Point(i*self.cell_size_x,j*self.cell_size_y)
-                cell_col.append(Cell(cell_tl, self.cell_size_x, self.cell_size_y, self.win))
-            self._cells.append(cell_col)
-
-        for col in self._cells:
-            for cell in col:
-                self._draw_cell(cell)
-        
-    
-    def _draw_cell(self, cell):
-        cell_tl = Point(cell._x1, cell._y1)
-        cell_br = Point(cell._x2, cell._y2)
-        cell.draw(cell_tl, cell_br)
-        self._animate()
-
-
-    def _animate(self):
-        self.win.redraw()
-        time.sleep(0.1)
